@@ -23,56 +23,55 @@ class FileHandler:
             print("Error: File is not open.")
 
     def clean_word(f, word):
-        cleaned_word = re.sub(r'[^\w\s]', '', word) 
+        cleaned_word = re.sub(r'[^\w\s]', '', word)
         if cleaned_word.isdigit() or re.match(r'^\d+(\.\d+)?$', cleaned_word):
             return None  
-        
-        return cleaned_word.lower()  
+        return cleaned_word.lower()
 
     def cheak_file_errors(f, file_to_check):
         try:
             all_words = set()
             check_words = set()
-            f.file_path = 'files\\wordList_250120.txt'
+            f.file_path = 'files\\wordList_250120.txt'  
             f.open_file('r')
             for line in f.file:
                 words_in_line = set(line.strip().split())
                 for word in words_in_line:
                     cleaned_word = f.clean_word(word)
-                    if cleaned_word:  
+                    if cleaned_word:
                         all_words.add(cleaned_word)
             f.close_file()
-            f.file_path = file_to_check
+            
+            f.file_path = file_to_check  
             f.open_file('r')
-            for line in f.file:
-                words_in_line = set(line.strip().split())
-                for word in words_in_line:
+            for line_num, line in enumerate(f.file, start=1):
+                words_in_line = line.strip().split()
+                for word_pos, word in enumerate(words_in_line, start=1):
                     cleaned_word = f.clean_word(word)
-                    if cleaned_word:  
-                        check_words.add(cleaned_word)
+                    if cleaned_word:
+                        check_words.add((cleaned_word, line_num, word_pos))  
             f.close_file()
-            unique_words = check_words - all_words
-
+            
+            
+            unique_words = {word for word, line_num, word_pos in check_words} - all_words
             if unique_words:
                 print(f"The following words in '{file_to_check}' are not recognized as English words:")
                 for word in sorted(unique_words):
                     print(f"- {word}")
             else:
                 print(f"All words in '{file_to_check}' are recognized as English words.")
-
-            return unique_words
+            
+            return check_words, unique_words
 
         except Exception as e:
             print(f"An error occurred: {e}")
-        return set() 
-    
+        return set(), set()  
 
     def compare_with_dictionary(f, unique_words):
         dictionary_words = set()
         matched_words_dict = {}
 
-        
-        f.file_path = 'files\\wordList_250120.txt'
+        f.file_path = 'files\\wordList_250120.txt'  
         f.open_file('r')
         for line in f.file:
             words_in_line = set(line.strip().split())
@@ -85,8 +84,8 @@ class FileHandler:
         
         for word in unique_words:
             matched_words = []
-            closest_distance = float('inf') 
-            potential_matches = []  
+            closest_distance = float('inf')
+            potential_matches = []
             
             for dict_word in dictionary_words:
                 distance = lev.distance(word, dict_word)
@@ -108,23 +107,23 @@ class FileHandler:
         return matched_words_dict
 
 
-    
 
 File1 = FileHandler("files\\sample_02.txt")
 samplePath1 = "files\\sample_02.txt"
 
-unique_words = File1.cheak_file_errors(samplePath1)
-
+check_words, unique_words = File1.cheak_file_errors(samplePath1)
 matched_words_dict = File1.compare_with_dictionary(unique_words)
 
 with open("files\\File_tester.txt", "w") as output_file:
-    output_file.write("Error sample corrections:\n")
+    output_file.write("The following words are not in english:\n")
 
-    for word in sorted(matched_words_dict.keys()): 
-        output_file.write(f"'{word}' -> Auto-correct: {matched_words_dict[word]}\n")
+    for word, line_num, word_pos in sorted(check_words, key=lambda x: (x[1], x[2])): 
+        if word in matched_words_dict:  
+            corrected_words = matched_words_dict[word]  
+            output_file.write(f"Line {line_num}, Position {word_pos}: '{word}' -> Auto-correct options: {{ {', '.join(corrected_words)} }}\n")
+            output_file.write("\n")  
     
     output_file.write("\n")
 
-# Confirmation that the corrections has been written to the file
-print("The error corrections have been written to 'output.txt'.")
 
+print("The error corrections with positions and all suggestions have been written to 'File_tester.txt'.")
