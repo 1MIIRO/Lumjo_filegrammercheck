@@ -110,15 +110,21 @@ class FileHandler:
 
     
 
-File1 = FileHandler("files\\sample_01.txt")
-samplePath1 = "files\\sample_01.txt"
+File1 = FileHandler("files\\sample_02.txt")
+samplePath1 = "files\\sample_02.txt"
 
 unique_words = File1.cheak_file_errors(samplePath1)
 
 matched_words_dict = File1.compare_with_dictionary(unique_words)
 
-print("\nError sample corrections:")
-for word in sorted(matched_words_dict.keys()): 
-    print(f"'{word}' -> Auto-correct: {matched_words_dict[word]}")
-    print() 
+with open("files\\File_tester.txt", "w") as output_file:
+    output_file.write("Error sample corrections:\n")
+
+    for word in sorted(matched_words_dict.keys()): 
+        output_file.write(f"'{word}' -> Auto-correct: {matched_words_dict[word]}\n")
+    
+    output_file.write("\n")
+
+# Confirmation that the corrections has been written to the file
+print("The error corrections have been written to 'output.txt'.")
 
